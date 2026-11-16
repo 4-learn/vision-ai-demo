@@ -1,0 +1,10 @@
+{
+ "base": "yolo11n.pt",
+ "train_seconds": 455,
+ "sha256_12": "496ade709982",
+ "data": "<work>/det/data.yaml",
+ "epochs": 30,
+ "imgsz": 320,
+ "batch": 8,
+ "freeze": 10
+}

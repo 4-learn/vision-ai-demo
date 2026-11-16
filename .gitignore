@@ -1,0 +1,7 @@
+story/data/factory/anomaly/
+__pycache__/
+*.cache
+story/*/out/
+demo/*/out/
+runs/
+story/my/

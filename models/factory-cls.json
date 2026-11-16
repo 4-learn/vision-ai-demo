@@ -1,0 +1,10 @@
+{
+ "base": "yolo11n-cls.pt",
+ "train_seconds": 307,
+ "sha256_12": "d75ae26f0572",
+ "data": "<work>/cls",
+ "epochs": 15,
+ "imgsz": 224,
+ "batch": 16,
+ "freeze": 0
+}
