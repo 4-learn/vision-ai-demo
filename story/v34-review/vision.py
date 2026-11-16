@@ -539,11 +539,15 @@ def main():
     pred = scores > det.threshold
     recall, false_rate = pred[y == 1].mean(), pred[y == 0].mean()
     results = pd.DataFrame({"image": [f"{k}/{p.name}" for p, k in zip(paths, kinds)], "score": scores.round(4), "pred": pred.astype(int), "y": y})
+    missed = results[(results["pred"] == 0) & (results["y"] == 1)]
     checklist = {
-        "測試集只打開一次": True, "門檻用校正資料定、沒有看測試集": True, "每一類都有成績": len(set(kinds)) > 2,
-        "漏掉的有逐筆看過": int(((~pred) & (y == 1)).sum()) >= 0, "模型有指紋": True,
-        "合成或公開資料的限制有寫": True, "上線後怎麼監控有寫": True, "隱私：不存畫面": LINE == "care" or True,
+        "每一類都有成績": len(set(kinds)) > 2,
+        "門檻只用校正良品定（不看測試集）": det.threshold == float(image_score(patch_maps(det.bank, patch_features(det.extractor, memory_calib_split(image_paths("train", "good"))[1]))).max()),
+        "漏掉的有列出來": len(missed) == int(((~pred) & (y == 1)).sum()),
+        "驗收標準有達到": bool(recall >= ACCEPTANCE["min_recall"] and false_rate <= ACCEPTANCE["max_false_rate"]),
+        "模型檔有指紋": all(len(sha256_12(STORY.parent / "models" / n)) == 12 for n in [f"{LINE}-yolo11n.pt"]),
     }
+    print("（下面這些要人看文件才能判斷，程式只能列出來：測試集只開一次、資料限制有寫、上線監控有寫、隱私）")
     print(f"== {LINE}：互審清單 ==")
     for k, v in checklist.items():
         print(f"[{'x' if v else ' '}] {k}")

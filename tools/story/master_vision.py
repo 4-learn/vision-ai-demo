@@ -841,7 +841,7 @@ def main():
     with torch.no_grad():
         pt = time_it(lambda: model(x))
     on = time_it(lambda: sess.run(None, {"image": xn}))
-    print(f"== {LINE}：一張圖的延遲（單執行緒，暖機 2 次後量 10 次取中位數）==")
+    print(f"== {LINE}：一張圖的延遲（PyTorch 限 1 執行緒、onnxruntime 用預設；暖機 2 次後量 10 次取中位數）==")
     print(f"PyTorch {pt:.0f} ms、onnxruntime {on:.0f} ms")
     print("延遲數字每台機器、每次執行都不同；講義只用來說明怎麼量，不當結論")
 #@main v25
@@ -938,11 +938,15 @@ def main():
           f"誤判率 {false_rate:.3f}（{'通過' if false_rate <= ACCEPTANCE['max_false_rate'] else '不通過'}）")
     print(results.assign(type=kinds).groupby("type")["pred"].agg(["size", "sum"]).rename(columns={"size": "張數", "sum": "判異常"}).to_string())
 #@main v34
+    missed = results[(results["pred"] == 0) & (results["y"] == 1)]
     checklist = {
-        "測試集只打開一次": True, "門檻用校正資料定、沒有看測試集": True, "每一類都有成績": len(set(kinds)) > 2,
-        "漏掉的有逐筆看過": int(((~pred) & (y == 1)).sum()) >= 0, "模型有指紋": True,
-        "合成或公開資料的限制有寫": True, "上線後怎麼監控有寫": True, "隱私：不存畫面": LINE == "care" or True,
+        "每一類都有成績": len(set(kinds)) > 2,
+        "門檻只用校正良品定（不看測試集）": det.threshold == float(image_score(patch_maps(det.bank, patch_features(det.extractor, memory_calib_split(image_paths("train", "good"))[1]))).max()),
+        "漏掉的有列出來": len(missed) == int(((~pred) & (y == 1)).sum()),
+        "驗收標準有達到": bool(recall >= ACCEPTANCE["min_recall"] and false_rate <= ACCEPTANCE["max_false_rate"]),
+        "模型檔有指紋": all(len(sha256_12(STORY.parent / "models" / n)) == 12 for n in [f"{LINE}-yolo11n.pt"]),
     }
+    print("（下面這些要人看文件才能判斷，程式只能列出來：測試集只開一次、資料限制有寫、上線監控有寫、隱私）")
     print(f"== {LINE}：互審清單 ==")
     for k, v in checklist.items():
         print(f"[{'x' if v else ' '}] {k}")

@@ -418,7 +418,7 @@ def main():
     with torch.no_grad():
         pt = time_it(lambda: model(x))
     on = time_it(lambda: sess.run(None, {"image": xn}))
-    print(f"== {LINE}：一張圖的延遲（單執行緒，暖機 2 次後量 10 次取中位數）==")
+    print(f"== {LINE}：一張圖的延遲（PyTorch 限 1 執行緒、onnxruntime 用預設；暖機 2 次後量 10 次取中位數）==")
     print(f"PyTorch {pt:.0f} ms、onnxruntime {on:.0f} ms")
     print("延遲數字每台機器、每次執行都不同；講義只用來說明怎麼量，不當結論")
 

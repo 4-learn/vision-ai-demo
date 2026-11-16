@@ -5,3 +5,4 @@ story/*/out/
 demo/*/out/
 runs/
 story/my/
+story/*/handoff/
