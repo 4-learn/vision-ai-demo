@@ -1,5 +1,5 @@
 // 架構圖產生器（影像 AI 淬鍊實戰專案 2026 v2）。繪圖引擎沿用 fastapi-workshop 與 ML 課的 gen.js。
-// since "00"＝之前就有（API 課平台、ML 課的判斷器與偵測器），永遠灰色。
+// since "00"＝之前就有（告警平台、ML 課的判斷器與偵測器），永遠灰色。
 // 用法：node gen.js all
 
 const VERS = ["00", ...Array.from({ length: 35 }, (_, i) => String(i + 1).padStart(2, "0"))];
@@ -21,7 +21,7 @@ const TITLES = {
   "29": ["MVP：骨架串流接平台", "Workshop"], "30": ["人在迴路", "真告警率"],
   "31": ["沒有攝影機也能測", "Mock"], "32": ["上線清單", "logging＋hashlib"],
   "33": ["驗收報告", "先寫標準"], "34": ["Demo 與互審", "清單"], "35": ["交接包", "SHA256SUMS"],
-  full: ["全貌：做完這門課會長這樣", "接 API 課平台與 ML 課的判斷器、偵測器"],
+  full: ["全貌：做完這門課會長這樣", "接告警平台與 ML 課的判斷器、偵測器"],
 };
 let FULL = false;
 const vi = (v) => VERS.indexOf(v);
@@ -49,7 +49,7 @@ function edge(pts, since, opts = {}) {
 // 外框
 el("f_pi", "frame", 186, 100, 500, 580, ["Pi 5 上的偵測器（這門課做的）"], "23", { dashed: true });
 el("f_vis", "frame", 196, 112, 480, 536, ["更強的偵測器"], "01", { badge: false });
-el("f_platform", "frame", 730, 112, 300, 330, ["API 課的告警平台"], "00", { badge: false });
+el("f_platform", "frame", 730, 112, 300, 330, ["告警平台"], "00", { badge: false });
 el("f_ml", "frame", 730, 470, 300, 178, ["ML 課做好的"], "00", { badge: false });
 
 el("a_cam", "actor", 24, 112, 140, 120, ["攝影機", "產線／寢室"], "00", { badge: false });

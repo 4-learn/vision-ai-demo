@@ -22,7 +22,7 @@ torch.set_num_threads(4)
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "story"))
-import platform_mock  # noqa: E402  API 課平台的替身（行為照 v0.12）
+import platform_mock  # noqa: E402  告警平台的替身
 
 ANOMALY = ROOT / "story" / "data" / "care" / "anomaly"   # 健康線：寢室畫面（程式畫的合成畫面）
 WEIGHTS = ResNet18_Weights.IMAGENET1K_V1
