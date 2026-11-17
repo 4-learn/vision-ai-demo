@@ -48,7 +48,6 @@ STD = np.array([0.229, 0.224, 0.225], np.float32)
 
 
 def preprocess(bgr):
-    """只用 OpenCV＋NumPy 做 ResNet 的前處理：縮到 256、中間切 224、0–1、減平均除標準差、HWC→NCHW。"""
     rgb = cv2.cvtColor(cv2.resize(bgr, (256, 256)), cv2.COLOR_BGR2RGB)
     crop = rgb[16:240, 16:240].astype(np.float32) / 255
     return ((crop - MEAN) / STD).transpose(2, 0, 1)[None]
@@ -56,10 +55,11 @@ def preprocess(bgr):
 
 print("== 1. InferenceSession：載入 ONNX，看它要什麼輸入 ==")
 sess = ort.InferenceSession(str(path), providers=["CPUExecutionProvider"])
+for a in sess.get_inputs():
+    print(a.name, a.shape, a.type)
+for a in sess.get_outputs():
+    print(a.name, a.shape, a.type)
 print("使用的 provider：", sess.get_providers())
-for kind, items in [("輸入", sess.get_inputs()), ("輸出", sess.get_outputs())]:
-    for a in items:
-        print(f"{kind} {a.name}：shape {a.shape}、type {a.type}")
 
 print("\n== 2. 前處理只用 NumPy：和 torchvision 的結果一樣嗎 ==")
 bgr = cv2.imread(str(IMAGE))
@@ -69,19 +69,19 @@ print(f"x：shape {x.shape}、dtype {x.dtype}；和 torchvision 最大差 {np.ab
 
 print("\n== 3. sess.run：餵 dict、拿回 list ==")
 outputs = sess.run(None, {"image": x})
-print(f"sess.run(None, ...) 回傳 {type(outputs).__name__}，{len(outputs)} 個；第一個 shape {outputs[0].shape}")
 feats = sess.run(["features"], {"image": x})[0]
-with torch.no_grad():
-    pt = model(torch.from_numpy(x)).numpy()
-print(f"和 PyTorch 的相對誤差 {np.abs(feats - pt).max() / np.abs(pt).max():.1e}")
 try:
     sess.run(None, {"image": x.astype(np.float64)})
 except Exception as e:
-    print(f"餵 float64 → {type(e).__name__}：模型要的是 tensor(float)，也就是 float32")
+    err = type(e).__name__
+print(f"sess.run(None, ...) 回傳 {type(outputs).__name__}，{len(outputs)} 個；第一個 shape {outputs[0].shape}")
+with torch.no_grad():
+    pt = model(torch.from_numpy(x)).numpy()
+print(f"和 PyTorch 的相對誤差 {np.abs(feats - pt).max() / np.abs(pt).max():.1e}")
+print(f"餵 float64 → {err}：模型要的是 tensor(float)，也就是 float32")
 
 
 def time_it(fn, n=20, warmup=3):
-    """暖機 warmup 次不算，再量 n 次，每次的毫秒都留下來。"""
     for _ in range(warmup):
         fn()
     ts = []

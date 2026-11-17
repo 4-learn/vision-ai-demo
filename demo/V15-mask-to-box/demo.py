@@ -30,9 +30,13 @@ print(table.to_string())
 
 print("\n== 3. 換成 YOLO label：類別 中心x 中心y 寬 高（都除以圖寬高）==")
 H, W = toy.shape
+min_area = 2
+boxes = []
 for i in range(1, n):
     x, y, w, h, area = stats[i]
-    keep = "保留" if area >= 2 else "太小，丟掉"
+    if area >= min_area:
+        boxes.append(((x + w / 2) / W, (y + h / 2) / H, w / W, h / H))
+    keep = "保留" if area >= min_area else "太小，丟掉"
     print(f"第 {i} 塊 面積 {area:>2}：0 {(x + w / 2) / W:.6f} {(y + h / 2) / H:.6f} {w / W:.6f} {h / H:.6f}  {keep}")
 
 print("\n== 4. 真的遮罩：bent/000 有兩塊 ==")

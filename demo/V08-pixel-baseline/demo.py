@@ -59,9 +59,10 @@ print("\n== 5. 像素差分數：依瑕疵類型拆開看 AUROC ==")
 for line in ["factory", "care"]:
     root = Path(f"story/data/{line}/anomaly")
     memory, calib = memory_calib_split(sorted((root / "train/good").glob("*.png")))
-    mean = np.mean([small_gray(p) for p in memory], axis=0)
     paths = sorted((root / "test").glob("*/*.png"))
     kinds = np.array([p.parent.name for p in paths])
+    stack = np.stack([small_gray(p) for p in memory])
+    mean = stack.mean(axis=0)
     score = np.array([np.abs(small_gray(p) - mean).mean() for p in paths])
     calib_score = np.array([np.abs(small_gray(p) - mean).mean() for p in calib])
     per = {}

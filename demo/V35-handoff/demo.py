@@ -10,8 +10,6 @@ import subprocess
 from pathlib import Path
 
 OUT = Path(__file__).resolve().parent / "out" / "handoff"
-shutil.rmtree(OUT, ignore_errors=True)
-OUT.mkdir(parents=True)
 
 print("== 1. 交接包放什麼、不放什麼 ==")
 files = {
@@ -19,6 +17,8 @@ files = {
     "scores.csv": "image,score,pred,y\nfallen/000.png,4.812,1,1\ngood/000.png,2.903,0,0\nobstacle/003.png,3.210,0,1\n",
     "README.md": "# 交接包\n健康線為合成畫面。工廠線影像為 MVTec AD 衍生（CC BY-NC-SA 4.0），不放進交接包。\n",
 }
+shutil.rmtree(OUT, ignore_errors=True)
+OUT.mkdir(parents=True)
 for name, text in files.items():
     (OUT / name).write_text(text, encoding="utf-8")
 skipped = ["fallen/000.png", "good/000.png", "obstacle/003.png"]
@@ -28,8 +28,8 @@ print("不放：  影像", len(skipped), "張（scores.csv 只記檔名，影像
 print("\n== 2. 寫 SHA256SUMS：一行「64 碼指紋＋兩個空白＋檔名」==")
 
 
+# 大檔案一段一段讀，不用整個讀進記憶體。
 def sha256_file(path, chunk=1 << 16):
-    """大檔案一段一段讀，不用整個讀進記憶體。"""
     h = hashlib.sha256()
     with open(path, "rb") as f:
         for block in iter(lambda: f.read(chunk), b""):

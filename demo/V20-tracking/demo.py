@@ -13,26 +13,29 @@ ROOT = Path(__file__).resolve().parents[2]
 POSES = ROOT / "story" / "data" / "care" / "pose" / "poses.csv"
 
 print("== 1. np.linalg.norm：上一格 2 人 × 這一格 2 人的距離矩陣 ==")
-prev = np.array([[100.0, 300.0], [400.0, 300.0]])      # 上一格：A 在左、B 在右（髖的中點，像素）
-curr = np.array([[395.0, 305.0], [108.0, 298.0]])      # 這一格：偵測器這次先吐出右邊那個人
-print("prev[:, None, :] 形狀", prev[:, None, :].shape, "；curr[None, :, :] 形狀", curr[None, :, :].shape)
+# 上一格：A 在左、B 在右（髖的中點，像素）；這一格：偵測器這次先吐出右邊那個人
+prev = np.array([[100.0, 300.0], [400.0, 300.0]])
+curr = np.array([[395.0, 305.0], [108.0, 298.0]])
 cost = np.linalg.norm(prev[:, None, :] - curr[None, :, :], axis=2)
+print("prev[:, None, :] 形狀", prev[:, None, :].shape, "；curr[None, :, :] 形狀", curr[None, :, :].shape)
 print(pd.DataFrame(cost.round(1), index=["上一格 A", "上一格 B"], columns=["這一格 #0", "這一格 #1"]).to_string())
 
 print("\n== 2. linear_sum_assignment：總距離最小的配法 ==")
 rows, cols = linear_sum_assignment(cost)
+pair_cost = cost[rows, cols]
 print("rows", rows.tolist(), "cols", cols.tolist())
 for r, c in zip(rows, cols):
     print(f"上一格 {'AB'[r]} → 這一格 #{c}，距離 {cost[r, c]:.1f}")
-print(f"照偵測器吐出的順序直接對（A→#0、B→#1）：總距離 {cost[0, 0] + cost[1, 1]:.1f}；配對後：{cost[rows, cols].sum():.1f}")
+print(f"照偵測器吐出的順序直接對（A→#0、B→#1）：總距離 {cost[0, 0] + cost[1, 1]:.1f}；配對後：{pair_cost.sum():.1f}")
 
 print("\n== 3. 每個人各挑最近的，會搶同一個 ==")
 prev3 = np.array([[100.0, 300.0], [160.0, 300.0]])     # A、B 靠得很近
 curr3 = np.array([[150.0, 300.0], [220.0, 300.0]])     # 兩個人都往右走了 50～60 像素
 cost3 = np.linalg.norm(prev3[:, None, :] - curr3[None, :, :], axis=2)
 print(pd.DataFrame(cost3.round(1), index=["上一格 A", "上一格 B"], columns=["這一格 #0", "這一格 #1"]).to_string())
-print("各挑最近（argmin）：", cost3.argmin(axis=1).tolist(), "← A、B 都挑 #0")
-r3, c3 = linear_sum_assignment(cost3)
+nearest = cost3.argmin(axis=1)          # 各挑最近
+r3, c3 = linear_sum_assignment(cost3)   # 一起考慮
+print("各挑最近（argmin）：", nearest.tolist(), "← A、B 都挑 #0")
 print("linear_sum_assignment：", list(zip(r3.tolist(), c3.tolist())), f"總距離 {cost3[r3, c3].sum():.1f}")
 
 print("\n== 4. 人數不一樣：多出來的沒配到；太遠的不算同一個人 ==")
@@ -75,10 +78,11 @@ def track(use_conf, seed=0):
         if i == 0:
             ids_now = truth.copy()                      # 第 1 格：直接給編號
         else:
+            # 配對：這一格的框 col 繼承上一格 r 的編號
             cost = np.linalg.norm(c_prev[:, None, :] - c[None, :, :], axis=2)
             r, col = linear_sum_assignment(cost)
             ids_now = np.empty(2, int)
-            ids_now[col] = ids_prev[r]                  # 框 col 繼承上一格 r 的編號
+            ids_now[col] = ids_prev[r]
             is_wrong = bool((ids_now != truth).any())
             wrong += is_wrong
             switches += is_wrong != was_wrong

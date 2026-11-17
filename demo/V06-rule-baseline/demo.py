@@ -48,12 +48,14 @@ print("== 1. 良品切兩份：記憶 80%、校正 20%（seed 0）==")
 print(f"良品 {len(goods)} 張 → 記憶 {len(memory)}、校正 {len(calib)}")
 
 print("\n== 2. 記憶裡的良品：每個量測的範圍 ==")
-print(memory.describe().loc[["min", "50%", "max"]].round(3).to_string())
+summary = memory.describe().loc[["min", "50%", "max"]]
+print(summary.round(3).to_string())
 
 print("\n== 3. 規則：任何一個量測超出 [最小, 最大] 就判異常 ==")
 lo, hi = memory.min(), memory.max()
-flag = outside(calib, lo, hi)
-print(f"校正的 {len(calib)} 張良品，被判異常 {int(flag.any(axis=1).sum())} 張")
+flag = (calib < lo) | (calib > hi)
+flagged = flag.any(axis=1).sum()
+print(f"校正的 {len(calib)} 張良品，被判異常 {int(flagged)} 張")
 print("是哪一個量測超出：", flag.sum().to_dict())
 
 test_paths = sorted((DATA / "factory/anomaly/test").glob("*/*.png"))
@@ -65,9 +67,10 @@ print(flag.groupby(kinds).sum().to_string())
 print("任何一個超出就判：", flag.any(axis=1).groupby(kinds).sum().to_dict())
 
 print("\n== 5. 範圍定多寬：min～max、1%～99%、平均 ± 3 個標準差 ==")
-for name, (l, h) in {"min～max": (memory.min(), memory.max()),
-                     "1%～99%": (memory.quantile(0.01), memory.quantile(0.99)),
-                     "平均±3σ": (memory.mean() - 3 * memory.std(), memory.mean() + 3 * memory.std())}.items():
+ranges = {"min～max": (memory.min(), memory.max()),
+          "1%～99%": (memory.quantile(0.01), memory.quantile(0.99)),
+          "平均±3σ": (memory.mean() - 3 * memory.std(), memory.mean() + 3 * memory.std())}
+for name, (l, h) in ranges.items():
     hit = outside(test, l, h).any(axis=1)
     bad = kinds != "good"
     print(f"{name:<9}校正良品誤判 {int(outside(calib, l, h).any(axis=1).sum()):>2}/{len(calib)}；"

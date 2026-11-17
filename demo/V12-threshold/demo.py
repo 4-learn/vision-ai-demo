@@ -27,14 +27,14 @@ print("\n== 3. drop_intermediate：預設會省略「不會改變曲線形狀」
 print(f"預設 {len(roc_curve(y, score)[2])} 個門檻；drop_intermediate=False 有 {len(roc_curve(y, score, drop_intermediate=False)[2])} 個")
 
 print("\n== 4. 選門檻 A：只有良品 → 校正良品的最大值 ==")
-t_good = float(score[y == 0].max())
+t_good = float(score[y == 0].max())          # 門檻 A：只有良品
+ok = np.where(tpr >= 0.9)[0]
+t_val = float(thr[ok[0]])                    # 門檻 B：有少量異常
 pred = score > t_good
 print(f"門檻 {t_good}：抓到 {int(pred[y == 1].sum())}/10、誤判 {int(pred[y == 0].sum())}/10")
 print("保證校正良品一張都不誤判；但異常抓到幾張，完全看運氣")
 
 print("\n== 5. 選門檻 B：有少量異常 → recall ≥ 0.9 裡，最高的門檻 ==")
-ok = np.where(tpr >= 0.9)[0]
-t_val = float(thr[ok[0]])
 pred = score >= t_val
 print(f"tpr >= 0.9 的第一列：門檻 {t_val}、tpr {tpr[ok[0]]:.3f}、fpr {fpr[ok[0]]:.3f}")
 print(f"門檻 {t_val}：抓到 {int(pred[y == 1].sum())}/10、誤判 {int(pred[y == 0].sum())}/10")

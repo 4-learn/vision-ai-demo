@@ -18,9 +18,10 @@ print(alerts["status"].value_counts().to_string())
 
 print("\n== 2. 真告警率：分母只算「已經確認」的 ==")
 done = alerts[alerts["status"].isin(["resolved", "dismissed"])]
+rate = (done["status"] == "resolved").mean()
 wrong = (alerts["status"] == "resolved").sum() / len(alerts)
 print(f"已確認 {len(done)} 筆：resolved {(done['status'] == 'resolved').sum()}、dismissed {(done['status'] == 'dismissed').sum()}")
-print(f"真告警率 = resolved ÷ 已確認 = {(done['status'] == 'resolved').mean():.3f}")
+print(f"真告警率 = resolved ÷ 已確認 = {rate:.3f}")
 print(f"錯的算法 resolved ÷ 全部 = {wrong:.3f}（把還沒處理的 open、acked 當成誤報）")
 
 print("\n== 3. 標籤只會出現在「有叫的」那一邊 ==")

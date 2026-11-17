@@ -21,9 +21,9 @@ print(f"整張平均：良品 {good.mean((1, 2)).tolist()}、測試 {test.mean()
 
 print("\n== 2. reshape(-1, C)：所有良品的所有小格，攤平成一個記憶庫 ==")
 bank = good.reshape(-1, 1)
-print(f"良品 {good.shape} → 記憶庫 {bank.shape}（{good.shape[0]} 張 × {good.shape[1]}×{good.shape[2]} 格，每格 1 個特徵）")
 nn = NearestNeighbors(n_neighbors=1).fit(bank)
 dist_map = nn.kneighbors(test.reshape(-1, 1))[0][:, 0].reshape(4, 4)
+print(f"良品 {good.shape} → 記憶庫 {bank.shape}（{good.shape[0]} 張 × {good.shape[1]}×{good.shape[2]} 格，每格 1 個特徵）")
 print("每一格到最像的正常小格的距離：")
 print(dist_map.astype(int))
 

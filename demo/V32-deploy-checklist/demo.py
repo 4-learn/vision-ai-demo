@@ -19,6 +19,8 @@ plain = logging.getLogger("plain")
 print(f"StreamHandler 預設的去處：{'stderr' if logging.StreamHandler().stream is sys.stderr else 'stdout'}")
 print(f"沒設定時的等級：{logging.getLevelName(plain.getEffectiveLevel())}（INFO 不會出現，WARNING 以上才會）")
 
+print("\n== 2. 一行一個 JSON：程式讀得回來、可以篩 ==")
+
 
 def json_logger(name, *streams):
     """每一筆紀錄排成一行 JSON：時間、等級，msg 放呼叫的人用 json.dumps 寫好的內容。"""
@@ -33,7 +35,6 @@ def json_logger(name, *streams):
     return log
 
 
-print("\n== 2. 一行一個 JSON：程式讀得回來、可以篩 ==")
 buffer = io.StringIO()                       # 示範用：同時寫一份到記憶體，才能讀回來
 log = json_logger("vision-care", sys.stderr, buffer)
 log.info(json.dumps({"event": "startup", "line": "care", "model": "1361ce3e501a"}))
@@ -64,8 +65,8 @@ manifest = {"files": {"model.bin": hashlib.sha256(model.read_bytes()).hexdigest(
 print(json.dumps(manifest))
 
 
+# 啟動自檢：任何一項不過就 raise，不准開始送事件。
 def startup_check(manifest, profile, event_type):
-    """啟動自檢：任何一項不過就 raise，不准開始送事件。"""
     for name, expected in manifest["files"].items():
         path = OUT / name
         if not path.exists():

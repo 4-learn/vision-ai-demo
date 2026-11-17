@@ -28,9 +28,8 @@ WEIGHTS = ResNet18_Weights.IMAGENET1K_V1
 IMAGE = ROOT / "story" / "data" / "care" / "anomaly" / "test" / "fallen" / "000.png"   # 健康線：倒地的寢室畫面
 
 
+# ResNet18 只算到 layer3：layer2 和放大後的 layer3 疊在一起，就是 V10 的小格特徵。
 class Patch(torch.nn.Module):
-    """ResNet18 只算到 layer3：layer2 和放大後的 layer3 疊在一起，就是 V10 的小格特徵。"""
-
     def __init__(self):
         super().__init__()
         r = resnet18(weights=WEIGHTS).eval()
@@ -69,15 +68,15 @@ torch.onnx.export(model, x, str(path), input_names=["image"], output_names=["fea
 print(f"{path.name}：{path.stat().st_size / 1e6:.1f} MB")
 
 print("\n== 3. 打開 ONNX 檔看看：輸入、輸出、opset ==")
-m = onnx.load(str(path))
-onnx.checker.check_model(m)
-print("onnx.checker.check_model：通過")
 
 
 def dims(v):
     return [d.dim_param or d.dim_value for d in v.type.tensor_type.shape.dim]
 
 
+m = onnx.load(str(path))
+onnx.checker.check_model(m)
+print("onnx.checker.check_model：通過")
 for kind, values in [("輸入", m.graph.input), ("輸出", m.graph.output)]:
     for v in values:
         print(f"{kind} {v.name}：{dims(v)}")
@@ -96,8 +95,8 @@ print("\n== 5. 沒寫 dynamic_axes：batch 被寫死成 1 ==")
 fixed = OUT / "patch-fixed.onnx"
 torch.onnx.export(model, x, str(fixed), input_names=["image"], output_names=["features"],
                   opset_version=17, dynamo=False)
-print("輸入 image：", dims(onnx.load(str(fixed)).graph.input[0]))
 three = np.repeat(x.numpy(), 3, axis=0)
+print("輸入 image：", dims(onnx.load(str(fixed)).graph.input[0]))
 print(f"有 dynamic_axes，一次 3 張 → {sess.run(None, {'image': three})[0].shape}")
 try:
     ort.InferenceSession(str(fixed), providers=["CPUExecutionProvider"]).run(None, {"image": three})
@@ -107,7 +106,8 @@ except Exception as e:   # onnxruntime 的錯誤類別在 C++ 那一層定義
 print("\n== 6. ultralytics：YOLO.export(format='onnx') 一行匯出 ==")
 from ultralytics import YOLO  # noqa: E402
 
-shutil.copy(ROOT / "models" / "yolo11n.pt", OUT / "yolo11n.pt")   # 匯出檔會寫在 .pt 旁邊，先複製一份到 out/
+# 匯出檔會寫在 .pt 旁邊，先複製一份到 out/
+shutil.copy(ROOT / "models" / "yolo11n.pt", OUT / "yolo11n.pt")
 onnx_path = YOLO(str(OUT / "yolo11n.pt")).export(format="onnx", imgsz=320, simplify=False)
 y = onnx.load(onnx_path)
 print(f"{Path(onnx_path).name}：{Path(onnx_path).stat().st_size / 1e6:.1f} MB；opset {y.opset_import[0].version}")

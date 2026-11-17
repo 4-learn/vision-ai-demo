@@ -36,8 +36,9 @@ background = nut < 40                     # 螺帽外面的黑色背景
 
 print("== 1. cv2.calcHist：亮度分布（8 段，每段 32）==")
 h = cv2.calcHist([nut], [0], None, [8], [0, 256])
+pct = h.ravel() / h.sum() * 100
 print(f"回傳 shape {h.shape}、dtype {h.dtype}；總數 {int(h.sum())} = 256×256")
-print("各段占比 %：", hist8(nut))
+print("各段占比 %：", " ".join(f"{v:4.1f}" for v in pct))
 print(f"平均亮度 {nut.mean():.1f}；最暗 {nut.min()}、最亮 {nut.max()}")
 
 print("\n== 2. cv2.equalizeHist：整張圖一起拉開 ==")
@@ -57,9 +58,9 @@ for clip in [1.0, 2.0, 4.0, 8.0]:
 
 print("\n== 4. 打光不均：左邊暗、右邊亮，兩邊各有一塊只亮 6 的污點 ==")
 rng = np.random.default_rng(0)
-demo = np.tile(np.linspace(30, 220, 256), (256, 1))      # 由左到右越來越亮
-demo[100:140, 30:60] += 6                                 # 暗的那一邊
-demo[100:140, 196:226] += 6                               # 亮的那一邊
+demo = np.tile(np.linspace(30, 220, 256), (256, 1))
+demo[100:140, 30:60] += 6
+demo[100:140, 196:226] += 6
 demo = np.clip(demo + rng.normal(0, 2, demo.shape), 0, 255).astype(np.uint8)
 
 

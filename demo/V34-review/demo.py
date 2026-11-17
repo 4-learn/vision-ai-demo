@@ -7,11 +7,12 @@ from dataclasses import asdict, dataclass, field
 from typing import Callable, Optional
 
 
+# how：互審的人要怎麼查；check：能自動查的放函式，None ＝ 要人看
 @dataclass
 class Item:
     name: str
-    how: str                                         # 互審的人要怎麼查
-    check: Optional[Callable[[dict], bool]] = None   # 能自動查的放函式；None ＝ 要人看
+    how: str
+    check: Optional[Callable[[dict], bool]] = None
     tags: list = field(default_factory=list)
 
 

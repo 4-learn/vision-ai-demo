@@ -19,11 +19,13 @@ print(t.astype(int).T.to_string())
 print(f"True 的格數 {int(flag.sum())}；連續段的開頭 {int(t['開頭'].sum())} 個，在第 {np.flatnonzero(t['開頭']).tolist()} 格")
 
 print("\n== 2. cumsum：替每一段編號，算每段多長 ==")
+# 段編號 0＝不在任何一段裡，drop(0) 把它拿掉
 run_id = t["開頭"].cumsum().where(flag)
+lengths = flag.groupby(run_id.fillna(0).astype(int)).size().drop(0)
+kept = lengths[lengths >= 2]
 print("段編號：", run_id.fillna(0).astype(int).tolist())
-lengths = flag.groupby(run_id.fillna(0).astype(int)).size().drop(0)   # 段編號 0＝不在任何一段裡
 print("每段長度：", lengths.to_dict())
-print("只留至少 2 格的段（去掉一閃而過的）：", lengths[lengths >= 2].index.tolist())
+print("只留至少 2 格的段（去掉一閃而過的）：", kept.index.tolist())
 
 print("\n== 3. 冷卻：通知之後 cooldown 格內，新的開頭不再通知 ==")
 

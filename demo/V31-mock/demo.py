@@ -17,10 +17,10 @@ sys.path.insert(0, str(STORY))
 import platform_mock  # noqa: E402
 
 
-# ---- 第 1 段：取像。只要有 capture() 就行 ----
+# ---- 取像只要有 capture()、送出只要有 send(event)：先各做一個假的 ----
+# FakeCamera 不連攝影機：依序讀資料夾裡的圖，讀完從頭再來。
+# RecordingSender 不連網路：把事件記在串列裡，事後檢查送了什麼。
 class FakeCamera:
-    """不連攝影機：依序讀資料夾裡的圖，讀完從頭再來。"""
-
     def __init__(self, paths):
         self.paths, self.i = list(paths), 0
 
@@ -30,9 +30,17 @@ class FakeCamera:
         return p
 
 
-class BrokenCamera:
-    """模擬攝影機斷線：第 n 次之後就丟錯。"""
+class RecordingSender:
+    def __init__(self):
+        self.sent = []
 
+    def send(self, event):
+        self.sent.append(event)
+        return 200
+
+
+# 模擬攝影機斷線：第 n 次之後就丟錯。
+class BrokenCamera:
     def __init__(self, inner, fail_after):
         self.inner, self.left = inner, fail_after
 
@@ -43,7 +51,7 @@ class BrokenCamera:
         return self.inner.capture()
 
 
-# ---- 第 2 段：偵測。只要有 threshold 和 score(paths) 就行 ----
+# ---- 偵測：只要有 threshold 和 score(paths) 就行 ----
 class FakeDetector:
     """不載模型：資料夾名稱不是 good 就給高分。用來測「流程」，不是測「準不準」。"""
     threshold = 1.0
@@ -52,18 +60,7 @@ class FakeDetector:
         return [(p, 2.0 if p.parent.name != "good" else 0.5, (128, 128)) for p in paths]
 
 
-# ---- 第 3 段：送出。只要能 send(event) 就行 ----
-class RecordingSender:
-    """不連網路：把事件記在串列裡，事後檢查送了什麼。"""
-
-    def __init__(self):
-        self.sent = []
-
-    def send(self, event):
-        self.sent.append(event)
-        return 200
-
-
+# ---- 真的送出 ----
 class HttpSender:
     def __init__(self, url, api_key="dev-device"):
         self.url, self.key = url, api_key

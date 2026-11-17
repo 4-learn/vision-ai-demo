@@ -65,13 +65,13 @@ print("== 1. 偵測器算出來的東西 ==")
 print(f"影像 {image.parent.name}/{image.name}：分數 {score:.3f}、門檻 {threshold:.3f}（校正良品最大值）")
 print(f"最熱點（原圖 256×256 的座標）x={x}, y={y}；落在異常遮罩裡：{bool(mask[y, x] > 0)}")
 
+print("\n== 2. 事件 JSON：分數、門檻、最熱點放進 detail，不放影像 ==")
+
 
 def to_confidence(score, threshold):
-    """距離不是機率：剛好在門檻上給 0.5（待確認），超過門檻多少就加多少，最多 1.0。和進度存檔 v27 同一個換法。"""
     return round(float(min(1.0, 0.5 + (score - threshold))), 3)
 
 
-print("\n== 2. 事件 JSON：分數、門檻、最熱點放進 detail，不放影像 ==")
 event = {"event_type": "room_anomaly", "location": "room_301", "source": "camera_room_01",
          "confidence": to_confidence(score, threshold), "occurred_at": "2026-02-02T03:10:00",
          "detail": {"score": round(score, 3), "threshold": round(threshold, 3), "peak_xy": [int(x), int(y)],
@@ -83,8 +83,8 @@ print(f"事件 {len(json.dumps(event).encode())} bytes；這張影像本身 {len
 
 print("\n== 3. 設定檔還沒有這個事件類型：平台回 400 ==")
 profile = json.loads((ROOT / "story" / "profiles" / "care.json").read_text(encoding="utf-8"))
-url = platform_mock.start(profile)
 print("設定檔收的事件類型：", list(profile["event_types"]))
+url = platform_mock.start(profile)
 r = requests.post(f"{url}/events", json=event, headers=KEY, timeout=5)
 print(f"{r.status_code} {r.json()['detail']}")
 

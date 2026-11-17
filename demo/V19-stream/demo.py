@@ -36,7 +36,6 @@ def camera(n):
         print(f"  （攝影機拍第 {i} 格）")
         yield i
 
-
 g = camera(3)
 print("建好了，還沒拍任何一格：", type(g).__name__)
 print("next(g) →", next(g))
@@ -52,18 +51,31 @@ for x in [10, 20, 30, 40, 50]:
     print(f"append({x}) → {list(w)}，滿了：{len(w) == w.maxlen}")
 
 
+print("\n== 3. 一段彎腰搬重物，一格一格流進來 ==")
+factory = load("factory")
+seq_id = factory[factory["alert"] == "1"]["seq_id"].iloc[0]
+seq = factory[factory["seq_id"] == seq_id]
+bending = seq[seq["posture"] == "bending"]["t"]
+print(f"{seq_id}：{len(seq)} 格（10 fps、4 秒），標註彎腰的格在 t = {bending.min()}～{bending.max()} 秒")
+rows = []
+
+
 def frames(seq):
-    """攝影機：一段骨架 → 每次 yield 一格（一列）。"""
     for _, row in seq.iterrows():
         yield row
 
-
 def angles(stream, min_conf=None):
-    """接在 frames() 後面：每一格 → (t, 軀幹角度)。min_conf：肩、髖有一點信心值不夠，這格就跳過。"""
     for row in stream:
         if min_conf is not None and any(row[f"{p}_c"] < min_conf for p in TORSO):
             continue
         yield row["t"], torso_angle(row)
+
+window = deque(maxlen=10)
+for t, a in angles(frames(seq)):
+    window.append(a)
+    change = max(window) - min(window) if len(window) == window.maxlen else None
+    rows.append({"t": t, "角度": round(a, 1), "過去 1 秒變化": None if change is None else round(change, 1)})
+print(pd.DataFrame(rows).iloc[::4].to_string(index=False))
 
 
 def first_big_change(stream, n=10, change_min=40):
@@ -76,18 +88,6 @@ def first_big_change(stream, n=10, change_min=40):
     return None, None
 
 
-print("\n== 3. 一段彎腰搬重物，一格一格流進來 ==")
-factory = load("factory")
-seq_id = factory[factory["alert"] == "1"]["seq_id"].iloc[0]
-seq = factory[factory["seq_id"] == seq_id]
-bending = seq[seq["posture"] == "bending"]["t"]
-print(f"{seq_id}：{len(seq)} 格（10 fps、4 秒），標註彎腰的格在 t = {bending.min()}～{bending.max()} 秒")
-rows, window = [], deque(maxlen=10)
-for t, a in angles(frames(seq)):
-    window.append(a)
-    change = max(window) - min(window) if len(window) == window.maxlen else None
-    rows.append({"t": t, "角度": round(a, 1), "過去 1 秒變化": None if change is None else round(change, 1)})
-print(pd.DataFrame(rows).iloc[::4].to_string(index=False))
 print("第一次「1 秒內變了 40 度以上」：t = %s 秒（變化 %s 度）" % first_big_change(angles(frames(seq))))
 
 print("\n== 4. 沒看到的點是 (0, 0)：先跳過，再判斷 ==")

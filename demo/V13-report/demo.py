@@ -21,7 +21,7 @@ print(f"門檻 {THRESHOLD:.2f}；全部 {len(scores)} 張，抓到 {int(scores['
 
 print("\n== 2. groupby：依類型分組，每組各算一次 ==")
 g = scores.groupby("type")
-print(g["pred"].sum().to_string())
+print(g["pred"].sum())
 print(f"groupby 回傳的是 {type(g).__name__}，要再接 .sum()、.size()、.agg() 才會算")
 
 print("\n== 3. agg：一次算好幾欄，欄名自己取 ==")

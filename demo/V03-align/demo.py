@@ -23,13 +23,15 @@ def rotate(img, angle):
     """以圖的中心逆時針轉 angle 度，大小不變；轉出去的角落用邊緣的顏色補。"""
     h, w = img.shape[:2]
     M = cv2.getRotationMatrix2D((w / 2, h / 2), angle, 1.0)
-    return cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    rotated = cv2.warpAffine(img, M, (w, h), borderMode=cv2.BORDER_REPLICATE)
+    return rotated
 
 
 def axis_angle(gray):
     _, fg = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
     m = cv2.moments(fg, binaryImage=True)
-    return 0.5 * np.degrees(np.arctan2(2 * m["mu11"], m["mu20"] - m["mu02"]))
+    angle = 0.5 * np.degrees(np.arctan2(2 * m["mu11"], m["mu20"] - m["mu02"]))
+    return angle
 
 
 def pixel_diff(a, b):
@@ -72,9 +74,9 @@ print("\n== 5. 逐角度找最像：每隔 3 度轉一次，和參考圖比 ==")
 moved = rotate(nut, 37)                                    # 假裝這是一顆歪了 37° 的螺帽
 small, ref = cv2.resize(moved, (64, 64)).astype(np.float32), cv2.resize(nut, (64, 64)).astype(np.float32)
 diffs = [(float(np.abs(rotate(small, a) - ref).mean()), a) for a in range(0, 360, 3)]
+best = min(diffs)[1]
 for d, a in sorted(diffs)[:4]:
     print(f"轉 {a:>3}°：平均像素差 {d:.1f}")
-best = min(diffs)[1]
 print(f"最像的角度 {best}°；轉回去後和原圖的像素差 {pixel_diff(moved, nut):.1f} → {pixel_diff(rotate(moved, best), nut):.1f}")
 score = {a: d for d, a in diffs}
 print("每隔 90° 都有一個很像的：", "、".join(f"{a}° {score[a]:.1f}" for a in (54, 144, 234, 324)))

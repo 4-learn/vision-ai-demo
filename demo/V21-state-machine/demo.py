@@ -19,9 +19,7 @@ TRANSITIONS = {
     "alert": {"acked": "normal"},
 }
 
-
 def step(state, event):
-    """查表：表上沒有的事件，狀態不變。"""
     return TRANSITIONS.get(state, {}).get(event, state)
 
 

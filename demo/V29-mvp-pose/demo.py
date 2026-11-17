@@ -75,8 +75,8 @@ for (_, a), (_, b) in zip(seq.iterrows(), other.iterrows()):
     mixed += [(a["subject_id"], torso_angle(a)), (b["subject_id"], torso_angle(b))]
 shared = Monitor("shared")
 shared_states = [shared.push(angle) for _, angle in mixed]
-monitors = {}
 own_states = []
+monitors = {}
 for pid, angle in mixed:
     monitors.setdefault(pid, Monitor(pid))
     own_states.append((pid, monitors[pid].push(angle)))

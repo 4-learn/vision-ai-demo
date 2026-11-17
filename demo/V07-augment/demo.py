@@ -10,17 +10,18 @@ from torchvision.transforms import v2 as T
 torch.manual_seed(0)
 FACTORY = Path("story/data/factory/anomaly")
 CARE = Path("story/data/care/anomaly")
-img = Image.open(FACTORY / "train/good/005.png").convert("RGB")
 
 print("== 1. ToImage＋ToDtype：PIL 圖 → 0～1 的 float tensor ==")
+img = Image.open(FACTORY / "train/good/005.png").convert("RGB")
 x = T.ToImage()(img)
-print(f"PIL 圖：size {img.size}、mode {img.mode}")
-print(f"ToImage 之後：shape {tuple(x.shape)}、dtype {x.dtype}、範圍 {int(x.min())}～{int(x.max())}")
 x = T.ToDtype(torch.float32, scale=True)(x)
+EVAL = T.Compose([T.ToImage(), T.ToDtype(torch.float32, scale=True)])
+u8 = T.ToImage()(img)
+print(f"PIL 圖：size {img.size}、mode {img.mode}")
+print(f"ToImage 之後：shape {tuple(u8.shape)}、dtype {u8.dtype}、範圍 {int(u8.min())}～{int(u8.max())}")
 print(f"ToDtype(scale=True) 之後：dtype {x.dtype}、範圍 {x.min():.3f}～{x.max():.3f}")
 
 print("\n== 2. Compose：把幾個步驟串成一個 ==")
-EVAL = T.Compose([T.ToImage(), T.ToDtype(torch.float32, scale=True)])
 print(EVAL)
 print(f"EVAL(img) 和上面一步一步做的結果相同：{torch.equal(EVAL(img), x)}")
 

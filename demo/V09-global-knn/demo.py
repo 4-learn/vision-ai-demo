@@ -11,9 +11,9 @@ from torchvision.models.feature_extraction import create_feature_extractor, get_
 
 torch.set_num_threads(4)
 WEIGHTS = ResNet18_Weights.IMAGENET1K_V1
-model = resnet18(weights=WEIGHTS).eval()
 
 print("== 1. get_graph_node_names：網路裡每一步叫什麼名字 ==")
+model = resnet18(weights=WEIGHTS).eval()
 _, nodes = get_graph_node_names(model)
 print(f"共 {len(nodes)} 個節點；前 5 個 {nodes[:5]}")
 print("layer2 底下的最後 3 個：", [n for n in nodes if n.startswith("layer2")][-3:])
@@ -21,9 +21,9 @@ print("最後 3 個：", nodes[-3:])
 print("return_nodes 寫 \"layer2\"，就是拿 layer2 這一整塊最後的輸出")
 
 print("\n== 2. create_feature_extractor：只拿中間幾層的輸出 ==")
-extractor = create_feature_extractor(model, return_nodes={"layer2": "l2", "layer3": "l3", "avgpool": "pool"})
 pre = WEIGHTS.transforms()
 img = Image.open("story/data/factory/anomaly/train/good/000.png").convert("RGB")
+extractor = create_feature_extractor(model, return_nodes={"layer2": "l2", "layer3": "l3", "avgpool": "pool"})
 with torch.no_grad():
     out = extractor(pre(img).unsqueeze(0))
 for name, t in out.items():
@@ -31,10 +31,8 @@ for name, t in out.items():
 print("l2 每一格看原圖約 224/28 = 8 像素見方；l3 約 16 像素；pool 把整張壓成 512 個數字")
 
 print("\n== 3. 一張圖 → 一串數字：每個特徵在整張圖上取平均 ==")
-l2_mean = out["l2"].mean(dim=(2, 3))
-l3_mean = out["l3"].mean(dim=(2, 3))
-vec = torch.cat([l2_mean, l3_mean], dim=1)
-print(f"l2 平均 {tuple(l2_mean.shape)} ＋ l3 平均 {tuple(l3_mean.shape)} → 一張圖 {tuple(vec.shape)}")
+vec = torch.cat([out["l2"].mean(dim=(2, 3)), out["l3"].mean(dim=(2, 3))], dim=1)
+print(f"l2 平均 {tuple(out['l2'].shape[:2])} ＋ l3 平均 {tuple(out['l3'].shape[:2])} → 一張圖 {tuple(vec.shape)}")
 
 print("\n== 4. NearestNeighbors：不用標籤，只問「離最近的良品多遠」 ==")
 normal = np.array([[1.0, 1.0], [1.2, 0.9], [0.8, 1.1], [1.1, 1.3], [0.9, 0.8]])

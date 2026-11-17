@@ -19,15 +19,12 @@ def read_gray(rel):
     return img
 
 
-def biggest_contour(mask):
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    return max(contours, key=cv2.contourArea)
-
-
 def measure(mask):
-    c = biggest_contour(mask)
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    c = max(contours, key=cv2.contourArea)
     area, perim = cv2.contourArea(c), cv2.arcLength(c, True)
-    return area, perim, 4 * np.pi * area / perim ** 2
+    circularity = 4 * np.pi * area / perim ** 2
+    return area, perim, circularity
 
 
 print("== 1. contourArea、arcLength：畫三個形狀來量 ==")
@@ -44,7 +41,8 @@ for name, mask in shapes.items():
 print(f"（理論值：圓面積 π×60² = {np.pi * 60 ** 2:.0f}、周長 2π×60 = {2 * np.pi * 60:.1f}）")
 
 print("\n== 2. arcLength 的 closed：要不要把頭尾接起來 ==")
-c = biggest_contour(shapes["正方形 邊 106"])
+contours, _ = cv2.findContours(shapes["正方形 邊 106"], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+c = max(contours, key=cv2.contourArea)
 print(f"closed=True {cv2.arcLength(c, True):.0f}；closed=False {cv2.arcLength(c, False):.0f}（少了最後一邊）")
 
 print("\n== 3. 螺帽：良品和翻面（flip）==")
@@ -58,8 +56,8 @@ print("\n== 4. cv2.HoughCircles：找螺帽中間的孔 ==")
 g = read_gray("factory/anomaly/train/good/000.png")
 circles = cv2.HoughCircles(cv2.medianBlur(g, 5), cv2.HOUGH_GRADIENT, dp=1.2, minDist=100,
                            param1=100, param2=30, minRadius=10, maxRadius=60)
-print(f"回傳 shape {circles.shape}（1 組 × 找到幾個圓 × (x, y, r)）")
 x, y, r = circles[0, 0]
+print(f"回傳 shape {circles.shape}（1 組 × 找到幾個圓 × (x, y, r)）")
 print(f"第一個圓：中心 ({x:.1f}, {y:.1f})、半徑 {r:.1f}")
 
 print("\n== 5. param2（累加門檻）：越小越容易「看到」圓 ==")

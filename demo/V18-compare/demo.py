@@ -59,12 +59,12 @@ for p in v.image_paths("test", "good")[:6]:
         kinds.append(kind)
 print(f"{len(paths)} 張：原圖、黑點、紅線各 6 張，存在 demo/V18-compare/out/")
 
+model = v.YOLO(str(ROOT / "models" / "factory-anomaly-yolo11n.pt"))
 memory, calib = v.memory_calib_split(v.image_paths("train", "good"))
 ex = v.load_extractor()
 bank = v.patch_bank(v.patch_features(ex, memory))
 threshold = float(v.image_score(v.patch_maps(bank, v.patch_features(ex, calib))).max())
 knn = v.image_score(v.patch_maps(bank, v.patch_features(ex, paths))) > threshold
-model = v.YOLO(str(ROOT / "models" / "factory-anomaly-yolo11n.pt"))
 yolo = [len(r.boxes) > 0 for r in model.predict([str(p) for p in paths], imgsz=320, conf=0.25, device="cpu", verbose=False)]
 result = pd.DataFrame({"種類": kinds, "只有正常（小格 kNN）": knn.astype(int), "有標註（YOLO 偵測）": np.array(yolo, dtype=int)})
 print(result.groupby("種類", sort=False).sum().rename(columns=lambda c: c + " 判異常").to_string())

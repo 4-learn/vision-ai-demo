@@ -19,9 +19,10 @@ small = np.zeros((4, 4), np.float32)
 small[1, 2] = 8
 print("原本：")
 print(small.astype(int))
-for name, flag in [("INTER_NEAREST", cv2.INTER_NEAREST), ("INTER_LINEAR", cv2.INTER_LINEAR)]:
-    big = cv2.resize(small, (8, 8), interpolation=flag)
-    print(f"{name}（第 3 列）：{big[2].round(1).tolist()}")
+big = cv2.resize(small, (8, 8), interpolation=cv2.INTER_NEAREST)
+print(f"INTER_NEAREST（第 3 列）：{big[2].round(1).tolist()}")
+big = cv2.resize(small, (8, 8), interpolation=cv2.INTER_LINEAR)
+print(f"INTER_LINEAR（第 3 列）：{big[2].round(1).tolist()}")
 
 print("\n== 2. cv2.normalize：任何範圍 → 0～255 ==")
 d = np.array([[2.1, 3.5], [4.8, 6.0]], np.float32)
@@ -92,11 +93,12 @@ hits_exact, hits_near = [], []
 for m, mask, p in zip(maps, masks, paths):
     if p.parent.name == "good":
         continue
-    b = cv2.resize(m, (256, 256), interpolation=cv2.INTER_LINEAR)
-    yy, xx = np.unravel_index(b.argmax(), b.shape)
+    big = cv2.resize(m, (256, 256), interpolation=cv2.INTER_LINEAR)
+    y, x = np.unravel_index(big.argmax(), big.shape)
     near = cv2.dilate((mask > 0).astype(np.uint8), np.ones((33, 33), np.uint8))
-    hits_exact.append(mask[yy, xx] > 0)
-    hits_near.append(near[yy, xx] > 0)
+    hit = near[y, x] > 0
+    hits_exact.append(mask[y, x] > 0)
+    hits_near.append(hit)
 print(f"obstacle 10 張：最熱點正好在遮罩上 {sum(hits_exact)} 張、在 16 像素內 {sum(hits_near)} 張")
 
 print("\n== 7. pixel-level AUROC：每一小格都當一題 ==")

@@ -10,6 +10,7 @@ import pandas as pd
 
 print("== 1. 先寫標準（跑之前就定好）==")
 ACCEPTANCE = {"min_recall": 0.85, "max_false_rate": 0.1, "per_type_min_recall": 0.8}
+threshold = 3.6          # 門檻是之前在校正資料上定的，這裡不准動
 print(json.dumps(ACCEPTANCE))
 
 rng = np.random.default_rng(0)
@@ -17,7 +18,6 @@ plan = {"good": (30, 3.0), "fallen": (25, 5.0), "obstacle": (25, 3.9), "blocked"
 df = pd.concat([pd.DataFrame({"type": t, "score": rng.normal(mu, 0.5, n)}) for t, (n, mu) in plan.items()],
                ignore_index=True)
 df["y"] = (df["type"] != "good").astype(int)
-threshold = 3.6                                   # 門檻是之前在校正資料上定的，這裡不准動
 
 
 def report(df, threshold, rules):
